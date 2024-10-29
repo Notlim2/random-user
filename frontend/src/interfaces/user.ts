@@ -6,6 +6,8 @@ export interface CreateUserDto {
   birthDate: string;
 }
 
+export type UpdateUserDto = Partial<CreateUserDto>;
+
 export interface User {
   id: number;
   name: string;

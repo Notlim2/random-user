@@ -1,4 +1,4 @@
-import { Add, Search } from "@mui/icons-material";
+import { Add, Delete, Edit, Search } from "@mui/icons-material";
 import Stack from "@mui/material/Stack";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
@@ -34,6 +34,8 @@ export default function UsersList() {
     rowsPerPage,
     setRowsPerPage,
     users,
+    deleteUser,
+    getUsers,
   } = useUsers();
   const closeCreateEditModal = useCallback(() => {
     setCreateEditModalProps(DEFAULT_CREATE_EDIT_MODAL_PROPS);
@@ -41,6 +43,18 @@ export default function UsersList() {
   const createUser = useCallback(() => {
     setCreateEditModalProps({ open: true, editingId: 0 });
   }, []);
+  const edit = useCallback((editingId: number) => {
+    setCreateEditModalProps({ open: true, editingId });
+  }, []);
+  const remove = useCallback(
+    async (userId: number) => {
+      if (confirm("Tem certeza que deseja remover este usuário?")) {
+        await deleteUser(userId);
+        await getUsers();
+      }
+    },
+    [deleteUser, getUsers]
+  );
   const handleChangePage = useCallback(
     (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
       setPage(newPage);
@@ -113,8 +127,27 @@ export default function UsersList() {
                   <TableCell>{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>{u.phone}</TableCell>
-                  <TableCell>{dayjs(u.birthDate).format('DD/MM/YYYY')}</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>
+                    {dayjs(u.birthDate).format("DD/MM/YYYY")}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row">
+                      <IconButton
+                        type="button"
+                        color="primary"
+                        onClick={() => edit(u.id)}
+                      >
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        color="error"
+                        onClick={() => remove(u.id)}
+                      >
+                        <Delete />
+                      </IconButton>
+                    </Stack>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

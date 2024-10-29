@@ -4,7 +4,7 @@ import {
   PropsWithChildren,
   SetStateAction,
 } from "react";
-import { CreateUserDto, User } from "../interfaces/user";
+import { CreateUserDto, UpdateUserDto, User } from "../interfaces/user";
 import { useCallback, useEffect, useState } from "react";
 
 const BASE_URL = `${import.meta.env.VITE_API_URL}/users`;
@@ -21,9 +21,9 @@ interface IUsersContext {
   users: User[];
   getUsers: () => Promise<void>;
   getRandomUserData: () => void;
-  createUser: (createUserDto: CreateUserDto) => void;
-  updateUser: () => Promise<void>;
-  deleteUser: () => Promise<void>;
+  createUser: (createUserDto: CreateUserDto) => Promise<void>;
+  updateUser: (userId: number, updateUserDto: UpdateUserDto) => Promise<void>;
+  deleteUser: (userId: number) => Promise<void>;
   getUsersLoading: boolean;
   getRandomUserLoading: boolean;
   createOrUpdateUserLoading: boolean;
@@ -100,8 +100,43 @@ export default function UsersContextProvider({ children }: PropsWithChildren) {
     }
     setCreateOrUpdateUserLoading(false);
   }, []);
-  const updateUser = useCallback(async () => {}, []);
-  const deleteUser = useCallback(async () => {}, []);
+  const updateUser = useCallback(
+    async (userId: number, updateUserDto: UpdateUserDto) => {
+      setCreateOrUpdateUserLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/${userId}`, {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(updateUserDto),
+        });
+        if (!response.ok) {
+          throw new Error("Houve um problema ao editar o usuário!");
+        }
+      } catch (e) {
+        const msg = (e as { message: string }).message;
+        setError(msg);
+      }
+      setCreateOrUpdateUserLoading(false);
+    },
+    []
+  );
+  const deleteUser = useCallback(async (userId: number) => {
+    setDeleteUserLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/${userId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Houve um problema ao excluir o usuário!");
+      }
+    } catch (e) {
+      const msg = (e as { message: string }).message;
+      setError(msg);
+    }
+    setDeleteUserLoading(false);
+  }, []);
 
   useEffect(() => {
     getUsers();

@@ -31,6 +31,7 @@ export default function CreateEditUser({
   const {
     getRandomUserData,
     getRandomUserLoading,
+    createOrUpdateUserLoading,
     createUser,
     updateUser,
     user,
@@ -44,22 +45,24 @@ export default function CreateEditUser({
   }, [onClose, setUser]);
   const handleSubmit = useCallback(
     async (values: FormikValues) => {
+      const createOrUpdateData = {
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        birthDate: user?.birthDate || "",
+        avatar: user?.avatar || "",
+      };
       if (isEditing) {
-        await updateUser();
+        await updateUser(editingId!, createOrUpdateData);
       } else {
-        await createUser({
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          birthDate: user?.birthDate || "",
-          avatar: user?.avatar || "",
-        });
+        await createUser(createOrUpdateData);
       }
       await getUsers();
       handleClose();
     },
     [
       createUser,
+      editingId,
       getUsers,
       handleClose,
       isEditing,
@@ -176,10 +179,16 @@ export default function CreateEditUser({
               color="error"
               onClick={handleClose}
               type="button"
+              disabled={createOrUpdateUserLoading}
             >
               Cancelar
             </Button>
-            <Button variant="contained" color="primary" type="submit">
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              disabled={createOrUpdateUserLoading}
+            >
               Salvar
             </Button>
           </DialogActions>

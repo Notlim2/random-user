@@ -121,7 +121,9 @@ export class UserRepository {
     const { result: users } = await this.findAll({
       take: Number.MAX_SAFE_INTEGER,
     });
-    const filteredUsers = users.filter((user) => user.id !== id);
+    const filteredUsers = users.filter(
+      (user) => Number(user.id) !== Number(id),
+    );
     if (filteredUsers.length === users.length)
       throw new NotFoundException(USER_NOT_FOUND_MSG);
     await this.writeToCsv(filteredUsers);
