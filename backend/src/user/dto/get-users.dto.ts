@@ -8,17 +8,5 @@ export class GetUsersDto extends PaginatedDto {
 
   @IsOptional()
   @IsString()
-  email?: string;
-
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @IsOptional()
-  @IsString()
-  birthDateGte?: string;
-
-  @IsOptional()
-  @IsString()
-  birthDateLte?: string;
+  search?: string;
 }

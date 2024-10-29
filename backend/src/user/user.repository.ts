@@ -27,49 +27,19 @@ export class UserRepository {
         .pipe(csv())
         .on('data', (data) => users.push(data as User))
         .on('end', () => {
-          const filteredUsers = users.filter((u) => {
-            let getThisUser = true;
-            if (
-              getUsersDto?.name?.length &&
-              !u.name
+          const filteredUsers = users.filter(
+            (u) =>
+              !getUsersDto?.search?.length ||
+              u.name
                 .toLocaleLowerCase()
-                .includes(getUsersDto.name.toLocaleLowerCase())
-            ) {
-              getThisUser = false;
-            }
-            if (
-              getUsersDto?.email?.length &&
-              !u.email
+                .includes(getUsersDto.search.toLocaleLowerCase()) ||
+              u.email
                 .toLocaleLowerCase()
-                .includes(getUsersDto.email.toLocaleLowerCase())
-            ) {
-              getThisUser = false;
-            }
-            if (
-              getUsersDto?.phone?.length &&
-              !u.phone
+                .includes(getUsersDto.search.toLocaleLowerCase()) ||
+              u.phone
                 .toLocaleLowerCase()
-                .includes(getUsersDto.phone.toLocaleLowerCase())
-            ) {
-              getThisUser = false;
-            }
-
-            const userBirthDate = new Date(u.birthDate);
-            if (
-              ((getUsersDto?.birthDateGte?.length ||
-                getUsersDto?.birthDateLte?.length) &&
-                getUsersDto?.birthDateGte?.length &&
-                userBirthDate.getTime() <
-                  new Date(getUsersDto.birthDateGte.length).getTime()) ||
-              (getUsersDto?.birthDateLte?.length &&
-                userBirthDate.getTime() >
-                  new Date(getUsersDto.birthDateLte.length).getTime())
-            ) {
-              getThisUser = false;
-            }
-
-            return getThisUser;
-          });
+                .includes(getUsersDto.search.toLocaleLowerCase()),
+          );
           const { skip, take } = getUsersDto;
           const filteredUsersCount = filteredUsers.length;
           const paginatedUsers = filteredUsers.splice(skip, take);
@@ -83,7 +53,7 @@ export class UserRepository {
     const { result: users } = await this.findAll({
       take: Number.MAX_SAFE_INTEGER,
     });
-    const user = users.find((user) => user.id === id);
+    const user = users.find((user) => Number(user.id) === Number(id));
     if (!user) throw new NotFoundException(USER_NOT_FOUND_MSG);
     return user;
   }
@@ -108,7 +78,7 @@ export class UserRepository {
     const { result: users } = await this.findAll({
       take: Number.MAX_SAFE_INTEGER,
     });
-    const index = users.findIndex((user) => user.id === id);
+    const index = users.findIndex((user) => Number(user.id) === Number(id));
     if (index === -1) throw new NotFoundException(USER_NOT_FOUND_MSG);
     users[index] = {
       ...users[index],
