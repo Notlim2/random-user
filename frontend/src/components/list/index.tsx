@@ -15,9 +15,14 @@ import { useUsers } from "../../hooks/users";
 import { useCallback, useState } from "react";
 import CreateEditUser from "../create-edit";
 import dayjs from "dayjs";
+import { User } from "../../interfaces/user";
+import { Tooltip } from "@mui/material";
 
-const DEFAULT_CREATE_EDIT_MODAL_PROPS = {
-  editingId: 0,
+const DEFAULT_CREATE_EDIT_MODAL_PROPS: {
+  editingUser: User | undefined;
+  open: boolean;
+} = {
+  editingUser: undefined,
   open: false,
 };
 
@@ -36,15 +41,17 @@ export default function UsersList() {
     users,
     deleteUser,
     getUsers,
+    search,
+    setSearch,
   } = useUsers();
   const closeCreateEditModal = useCallback(() => {
     setCreateEditModalProps(DEFAULT_CREATE_EDIT_MODAL_PROPS);
   }, []);
   const createUser = useCallback(() => {
-    setCreateEditModalProps({ open: true, editingId: 0 });
+    setCreateEditModalProps({ open: true, editingUser: undefined });
   }, []);
-  const edit = useCallback((editingId: number) => {
-    setCreateEditModalProps({ open: true, editingId });
+  const edit = useCallback((editingUser: User) => {
+    setCreateEditModalProps({ open: true, editingUser });
   }, []);
   const remove = useCallback(
     async (userId: number) => {
@@ -85,13 +92,22 @@ export default function UsersList() {
           width="100%"
           columnGap={1}
         >
-          <IconButton color="success" onClick={createUser}>
-            <Add />
-          </IconButton>
-          <TextField fullWidth />
-          <IconButton color="info">
-            <Search />
-          </IconButton>
+          <Tooltip title="Novo usuário">
+            <IconButton color="success" onClick={createUser}>
+              <Add />
+            </IconButton>
+          </Tooltip>
+          <TextField
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            fullWidth
+            placeholder="Pesquisar..."
+          />
+          <Tooltip title="Pesquisar">
+            <IconButton color="info">
+              <Search />
+            </IconButton>
+          </Tooltip>
         </Stack>
         <TableContainer component={Paper}>
           <Table>
@@ -135,7 +151,7 @@ export default function UsersList() {
                       <IconButton
                         type="button"
                         color="primary"
-                        onClick={() => edit(u.id)}
+                        onClick={() => edit(u)}
                       >
                         <Edit />
                       </IconButton>
@@ -163,7 +179,7 @@ export default function UsersList() {
         </TableContainer>
       </Stack>
       <CreateEditUser
-        editingId={createEditModalProps.editingId}
+        editingUser={createEditModalProps.editingUser}
         open={createEditModalProps.open}
         onClose={closeCreateEditModal}
       />

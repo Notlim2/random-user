@@ -9,21 +9,22 @@ import { object, string } from "yup";
 import { Form, Formik, FormikValues } from "formik";
 import TextFieldWrapper from "../text-field";
 import DatePicker from "../date-picker";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ImageInput from "../image-input";
 import { useUsers } from "../../hooks/users";
 import { Casino } from "@mui/icons-material";
 import { Stack, Tooltip } from "@mui/material";
 import dayjs from "dayjs";
+import { User } from "../../interfaces/user";
 
 interface CreateEditUserProps {
-  editingId: number;
+  editingUser: User | undefined;
   open: boolean;
   onClose: () => void;
 }
 
 export default function CreateEditUser({
-  editingId,
+  editingUser,
   open,
   onClose,
 }: CreateEditUserProps) {
@@ -37,23 +38,29 @@ export default function CreateEditUser({
     user,
     setUser,
     getUsers,
+    uploadAvatar,
   } = useUsers();
-  const isEditing = useMemo(() => !!editingId, [editingId]);
+  const isEditing = useMemo(() => !!editingUser, [editingUser]);
   const handleClose = useCallback(() => {
     setUser(undefined);
+    setAvatar(undefined);
     onClose();
   }, [onClose, setUser]);
   const handleSubmit = useCallback(
     async (values: FormikValues) => {
+      let avatarUrl: string | undefined = "";
+      if (avatar) {
+        avatarUrl = await uploadAvatar(avatar);
+      }
       const createOrUpdateData = {
         name: values.name,
         email: values.email,
         phone: values.phone,
         birthDate: user?.birthDate || "",
-        avatar: user?.avatar || "",
+        avatar: avatarUrl || user?.avatar || "",
       };
       if (isEditing) {
-        await updateUser(editingId!, createOrUpdateData);
+        await updateUser(editingUser!.id, createOrUpdateData);
       } else {
         await createUser(createOrUpdateData);
       }
@@ -61,16 +68,23 @@ export default function CreateEditUser({
       handleClose();
     },
     [
+      avatar,
       createUser,
-      editingId,
+      editingUser,
       getUsers,
       handleClose,
       isEditing,
       updateUser,
+      uploadAvatar,
       user?.avatar,
       user?.birthDate,
     ]
   );
+  useEffect(() => {
+    if (editingUser) {
+      setUser(editingUser);
+    }
+  }, [editingUser, open, setUser]);
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle>Cadastrar usuário</DialogTitle>

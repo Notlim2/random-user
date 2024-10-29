@@ -6,8 +6,11 @@ import {
 } from "react";
 import { CreateUserDto, UpdateUserDto, User } from "../interfaces/user";
 import { useCallback, useEffect, useState } from "react";
+import queryString from "query-string";
 
-const BASE_URL = `${import.meta.env.VITE_API_URL}/users`;
+const API_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = `${API_URL}/users`;
+const FILE_URL = `${API_URL}/file`;
 const DEFAULT_ROWS_PER_PAGE = 10;
 
 interface IUsersContext {
@@ -30,12 +33,16 @@ interface IUsersContext {
   deleteUserLoading: boolean;
   user: Omit<Partial<User>, "id"> | undefined;
   setUser: Dispatch<SetStateAction<Omit<Partial<User>, "id"> | undefined>>;
+  uploadAvatar: (file: File) => Promise<string | undefined>;
+  search: string;
+  setSearch: Dispatch<SetStateAction<string>>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const UsersContext = createContext({} as IUsersContext);
 
 export default function UsersContextProvider({ children }: PropsWithChildren) {
+  const [search, setSearch] = useState("");
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
@@ -51,7 +58,12 @@ export default function UsersContextProvider({ children }: PropsWithChildren) {
   const getUsers = useCallback(async () => {
     setGetUsersLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}`);
+      const query = queryString.stringify({
+        skip: page * rowsPerPage,
+        take: rowsPerPage,
+        search,
+      });
+      const response = await fetch(`${BASE_URL}?${query}`);
       if (!response.ok) {
         throw new Error(
           "Houve um problema ao buscar pelos usuários cadastrados!"
@@ -65,7 +77,7 @@ export default function UsersContextProvider({ children }: PropsWithChildren) {
       setError(msg);
     }
     setGetUsersLoading(false);
-  }, []);
+  }, [page, rowsPerPage, search]);
   const getRandomUserData = useCallback(async () => {
     setGetRandomUserLoading(true);
     try {
@@ -137,6 +149,30 @@ export default function UsersContextProvider({ children }: PropsWithChildren) {
     }
     setDeleteUserLoading(false);
   }, []);
+  const mountAvatarUrl = useCallback((avatarUrl: string) => {
+    return `${API_URL}/uploads/${avatarUrl}`;
+  }, []);
+  const uploadAvatar = useCallback(
+    async (file: File) => {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const result = await fetch(`${FILE_URL}/upload`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!result.ok) {
+          throw new Error("Erro ao fazer upload de avatar!");
+        }
+        const avatarUrl = await result.text();
+        return mountAvatarUrl(avatarUrl);
+      } catch (e) {
+        const msg = (e as { message: string }).message;
+        setError(msg);
+      }
+    },
+    [mountAvatarUrl]
+  );
 
   useEffect(() => {
     getUsers();
@@ -164,6 +200,9 @@ export default function UsersContextProvider({ children }: PropsWithChildren) {
         deleteUserLoading,
         user,
         setUser,
+        uploadAvatar,
+        search,
+        setSearch,
       }}
     >
       {children}
